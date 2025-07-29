@@ -36,10 +36,5 @@
 #     dest: "{{ nginx_conf_dest }}"
 # copy only works for files without variales. so use ansible.builtin.template:
 
-- name: Import backend service task
+- name: Import frontend service task
   import_tasks: template_module.yaml    #this is also a task but for usage practice i create separte file for this task called template.yaml
-
-- name: restart nginx
-  ansible.builtin.service:
-    name: "{{ web_service_name }}"
-    state: restarted
