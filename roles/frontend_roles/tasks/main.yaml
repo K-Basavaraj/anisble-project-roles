@@ -37,7 +37,7 @@
 # copy only works for files without variales. so use ansible.builtin.template:
 
 - name: Import backend service task
-  import_tasks: template.yaml    #this is also a task but for usage practice i create separte file for this task called template.yaml
+  import_tasks: template_module.yaml    #this is also a task but for usage practice i create separte file for this task called template.yaml
 
 - name: restart nginx
   ansible.builtin.service:
