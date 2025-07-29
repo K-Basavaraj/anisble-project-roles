@@ -1,0 +1,45 @@
+- name: install nginx server
+  ansible.builtin.package:
+    name: "{{ web_server_package }}"
+    state: present
+
+- name: start service
+  ansible.builtin.service:
+    name: "{{ web_service_name }}"
+    state: started
+    enabled: true
+
+- name: remove default content that web server is serving
+  ansible.builtin.file:
+    path: /usr/share/nginx/html
+    state: absent
+
+- name: create custom html dir
+  ansible.builtin.file:
+    path: /usr/share/nginx/html
+    state: directory
+
+- name: download the code
+  ansible.builtin.get_url:
+    url: "{{ frontend_zip_url }}"
+    dest: "{{ frontend_zip_dest }}"  #/tmp/frontend.zip here its a destination 
+
+- name: extract the zip code file
+  ansible.builtin.unarchive:
+    src: "{{ frontend_zip_dest }}" #/tmp/frontend.zip here its a src
+    dest: /usr/share/nginx/html    #unzip in this destination place
+    remote_src: yes                # This tells Ansible that the ZIP file is already present **on the target machine**, not the control machine.
+
+# - name: copy frontend conf file
+#   ansible.builtin.copy:
+#     src: "{{ nginx_conf_src }}"
+#     dest: "{{ nginx_conf_dest }}"
+# copy only works for files without variales. so use ansible.builtin.template:
+
+- name: Import backend service task
+  import_tasks: template.yaml    #this is also a task but for usage practice i create separte file for this task called template.yaml
+
+- name: restart nginx
+  ansible.builtin.service:
+    name: "{{ web_service_name }}"
+    state: restarted
