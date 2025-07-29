@@ -1,0 +1,60 @@
+- name: ansible to install python reqierd lib for import from backend to mysql
+  ansible.builtin.pip:
+    name: "{{ python_libraries }}" # Use list of libraries from vars
+    executable: "{{ pip_version }}"
+
+- name: disable defult nodejs
+  ansible.builtin.command: dnf module disable nodejs -y
+
+- name: enable nodejs 20
+  ansible.builtin.command: dnf module enable nodejs:20 -y
+
+- name: install nodejs
+  ansible.builtin.package:
+      name: "{{ item.name }}"
+      state: "{{ item.state }}"
+  loop: "{{ packages_to_install }}"
+       
+
+- name: add expense user
+  ansible.builtin.user:
+    name: expense
+
+- name: Create a app folder
+  ansible.builtin.file:
+    path: /app
+    state: directory
+
+- name: Download file with custom HTTP headers
+  ansible.builtin.get_url:
+    url: https://expense-builds.s3.us-east-1.amazonaws.com/expense-backend-v2.zip
+    dest: /tmp/backend.zip
+
+- name: extract the code
+  ansible.builtin.unarchive:
+    src: /tmp/backend.zip #by defult ansible thinks this is in ansible server
+    dest: /app
+    remote_src: yes #its like no need to move, already this derictory exist in the remote.
+
+- name: install the dependencies
+  ansible.builtin.command: npm install
+  args:
+    chdir: /app #somedir/#Change the working directory to somedir/ and run the command as db_owner if /path/to/database does not exist
+
+# - name: copy backend service file
+#   ansible.builtin.copy:
+#     src: backend.service
+#     dest: /etc/systemd/system/backend.service
+# copy only works for files without variales. so use ansible.builtin.template:
+
+- name: Import backend service task
+  import_tasks: template.yaml      
+
+- name: Import task to load MySQL data
+  import_tasks: import_mysql_data.yaml  #from file which is task we can plase this task here but for to know like this also we can use imort
+
+- name: demon reload and start
+  ansible.builtin.systemd_service:
+    state: restarted
+    daemon_reload: true
+    name: backend
